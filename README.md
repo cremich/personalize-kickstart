@@ -3,6 +3,10 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?style=for-the-badge)](./CODE_OF_CONDUCT.md)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=for-the-badge)](https://github.com/prettier/prettier)
 
+---
+
+[![codecov](https://codecov.io/gh/cremich/personalize-kickstart/branch/main/graph/badge.svg?token=QSAU3QF2SS&style=for-the-badge)](https://codecov.io/gh/cremich/personalize-kickstart)
+
 The goal of this repository is to provide you a kickstart for your personalization journey when building a recommendation engine based on Amazon Personalize.
 
 It will serve you as a reference implementation you can both learn the concepts and integration aspects of Amazon Personalize. You can also use it to build you own recommendation engine upon best practices and production-ready components based on the [AWS CDK](https://aws.amazon.com/de/cdk/). Those components include:
