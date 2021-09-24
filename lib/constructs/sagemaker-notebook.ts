@@ -1,0 +1,55 @@
+import * as cdk from "@aws-cdk/core";
+import * as ec2 from "@aws-cdk/aws-ec2";
+import * as iam from "@aws-cdk/aws-iam";
+import * as sagemaker from "@aws-cdk/aws-sagemaker";
+
+export interface SageMakerNotebookProps {
+  readonly notebookInstanceName?: string;
+  readonly volumeSizeInGb?: number;
+  readonly instanceType: ec2.InstanceType;
+}
+
+export class SageMakerNotebook extends cdk.Construct {
+  public sagemakerNotebookInstance: sagemaker.CfnNotebookInstance;
+
+  constructor(scope: cdk.Construct, id: string, props: SageMakerNotebookProps) {
+    super(scope, id);
+
+    const sagemakerExecutionRole = new iam.Role(this, "sagemaker-execution-role", {
+      assumedBy: new iam.ServicePrincipal("sagemaker.amazonaws.com"),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess"),
+        iam.ManagedPolicy.fromManagedPolicyArn(
+          this,
+          "personalize-full-access",
+          "arn:aws:iam::aws:policy/service-role/AmazonPersonalizeFullAccess"
+        ),
+      ],
+      inlinePolicies: {
+        s3Buckets: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: ["arn:aws:s3:::SageMaker"],
+              actions: ["s3:ListBucket"],
+            }),
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: ["arn:aws:s3:::SageMaker/*"],
+              actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+            }),
+          ],
+        }),
+      },
+    });
+
+    this.sagemakerNotebookInstance = new sagemaker.CfnNotebookInstance(this, "notebook-instance", {
+      instanceType: props.instanceType.toString(),
+      roleArn: sagemakerExecutionRole.roleArn,
+      notebookInstanceName: props.notebookInstanceName,
+      volumeSizeInGb: props.volumeSizeInGb,
+    });
+
+    cdk.Tags.of(this).add("component", "sagemaker");
+  }
+}
