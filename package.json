@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@aws-cdk/aws-iam": "1.125.0",
+    "@aws-cdk/aws-s3": "1.125.0",
     "@aws-cdk/aws-ec2": "1.125.0",
     "@aws-cdk/aws-sagemaker": "1.125.0",
     "@aws-cdk/core": "1.125.0",
