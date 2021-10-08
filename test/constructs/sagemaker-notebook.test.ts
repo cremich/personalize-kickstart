@@ -131,12 +131,24 @@ describe("Sagemaker notebook construct", () => {
               {
                 Action: "s3:ListBucket",
                 Effect: "Allow",
-                Resource: "arn:aws:s3:::SageMaker",
+                Resource: {
+                  "Fn::GetAtt": ["sagemakernotebookdataanalysisD2523CC9", "Arn"],
+                },
               },
               {
                 Action: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
                 Effect: "Allow",
-                Resource: "arn:aws:s3:::SageMaker/*",
+                Resource: {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["sagemakernotebookdataanalysisD2523CC9", "Arn"],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
               },
             ],
             Version: "2012-10-17",
@@ -144,6 +156,54 @@ describe("Sagemaker notebook construct", () => {
           PolicyName: "s3Buckets",
         },
       ]),
+    });
+  });
+
+  test("Data analysis bucket is created", () => {
+    new SageMakerNotebook(stack, "sagemaker-notebook", {
+      instanceType: new ec2.InstanceType("ml.t2.medium"),
+      volumeSizeInGb: 64,
+    });
+
+    const assert = Template.fromStack(stack);
+    assert.hasResourceProperties("AWS::S3::Bucket", {
+      BucketEncryption: {
+        ServerSideEncryptionConfiguration: [
+          {
+            ServerSideEncryptionByDefault: {
+              SSEAlgorithm: "AES256",
+            },
+          },
+        ],
+      },
+      PublicAccessBlockConfiguration: {
+        BlockPublicAcls: true,
+        BlockPublicPolicy: true,
+        IgnorePublicAcls: true,
+        RestrictPublicBuckets: true,
+      },
+      Tags: [
+        {
+          Key: "component",
+          Value: "sagemaker",
+        },
+      ],
+      VersioningConfiguration: {
+        Status: "Enabled",
+      },
+    });
+  });
+
+  test("Data analysis bucket does not retain", () => {
+    new SageMakerNotebook(stack, "sagemaker-notebook", {
+      instanceType: new ec2.InstanceType("ml.t2.medium"),
+      volumeSizeInGb: 64,
+    });
+
+    const assert = Template.fromStack(stack);
+    assert.hasResource("AWS::S3::Bucket", {
+      UpdateReplacePolicy: "Delete",
+      DeletionPolicy: "Delete",
     });
   });
 });
