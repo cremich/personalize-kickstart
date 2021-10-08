@@ -12,11 +12,12 @@ export interface SageMakerNotebookProps {
 
 export class SageMakerNotebook extends cdk.Construct {
   public sagemakerNotebookInstance: sagemaker.CfnNotebookInstance;
+  public bucket: s3.Bucket;
 
   constructor(scope: cdk.Construct, id: string, props: SageMakerNotebookProps) {
     super(scope, id);
 
-    const bucket = new s3.Bucket(this, "data-analysis", {
+    this.bucket = new s3.Bucket(this, "data-analysis", {
       encryption: s3.BucketEncryption.S3_MANAGED,
       autoDeleteObjects: true,
       versioned: true,
@@ -39,12 +40,12 @@ export class SageMakerNotebook extends cdk.Construct {
           statements: [
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
-              resources: [bucket.bucketArn],
+              resources: [this.bucket.bucketArn],
               actions: ["s3:ListBucket"],
             }),
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
-              resources: [`${bucket.bucketArn}/*`],
+              resources: [`${this.bucket.bucketArn}/*`],
               actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
             }),
           ],
