@@ -98,6 +98,31 @@ new PersonalizeStack(app, `personalize-${sandbox}`, {
 });
 ```
 
+### Data exploration notebook
+
+We want to build a recommendation engine covering all features of Amazon Personalize. The dataset we will use is the publicly available MovieLens dataset.
+
+> GroupLens Research has collected and made available rating data sets from the MovieLens web site (https://movielens.org). The data sets were collected over various periods of time, depending on the size of the set. Before using these data sets, please review their README files for the usage licenses and other details.
+
+Source: https://grouplens.org/datasets/movielens/
+
+The MovieLens dataset contains 25 million movie ratings and a rich set of movie metadata. We will use this data to provide an initial version of our recommendation engine based on historical data. Before you just import your historical data, it is recommended to gather knowledge. Both on your data and on your business domain.
+Every recommendation engine project is kind of unique if we look at the data we have to process and the way the business works. In a very first step during a proof-of-concept phase, it is all about finding answers on:
+
+- What data can we use?
+- What data do we need?
+- Is our data quality sufficient?
+- How do we access the required data?
+- How do we identify users, interaction or items we want to recommend?
+
+The [data exploration notebook](./notebooks/data-exploration.ipynb) contains analyses both inspired from my personal experiences as well as a lot of cool stuff of the open source community like the following:
+
+- [Analysis on the Movie Lens dataset using pandas](https://notebook.community/harishkrao/DSE200x/Mini%20Project/Analysis%20on%20the%20Movie%20Lens%20dataset)
+- [Amazon Personalize immersion day](https://personalization-immersionday.workshop.aws/en/)
+- [Analysis of MovieLens dataset (Beginner'sAnalysis)](https://www.kaggle.com/jneupane12/analysis-of-movielens-dataset-beginner-sanalysis)
+- [Data Analysis using the MovieLens dataset with pandas](https://www.youtube.com/watch?v=8kElv1sticI)
+- [Comprehensive Data Visualization with Matplotlib](https://towardsdatascience.com/comprehensive-data-explorations-with-matplotlib-a388be12a355)
+
 ## 🤝 Contributing
 
 Contributions, issues and feature requests are welcome!
