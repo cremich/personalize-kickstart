@@ -184,6 +184,10 @@ describe("Sagemaker notebook construct", () => {
       },
       Tags: [
         {
+          Key: "aws-cdk:auto-delete-objects",
+          Value: "true",
+        },
+        {
           Key: "component",
           Value: "sagemaker",
         },

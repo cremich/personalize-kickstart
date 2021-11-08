@@ -1,12 +1,14 @@
 import * as cdk from "@aws-cdk/core";
 import * as ec2 from "@aws-cdk/aws-ec2";
 import { SageMakerNotebook } from "./constructs/sagemaker-notebook";
+import { MovielensDataPreparationPipeline } from "./data-preparation/constructs/movielens/pipeline";
 
 interface PersonalizeStackProps extends cdk.StackProps {
   readonly notebookInstanceName?: string;
   readonly notebookVolumeSizeInGb?: number;
   readonly provisionSagemakerNotebook: boolean;
   readonly sagemakerInstanceType?: string;
+  readonly retainRawDataBucket?: boolean;
 }
 
 export class PersonalizeStack extends cdk.Stack {
@@ -20,6 +22,10 @@ export class PersonalizeStack extends cdk.Stack {
         volumeSizeInGb: props.notebookVolumeSizeInGb,
       });
     }
+
+    new MovielensDataPreparationPipeline(this, "movielens-data-prep", {
+      retainRawData: props?.retainRawDataBucket,
+    });
 
     cdk.Tags.of(this).add("application", "personalize");
   }
