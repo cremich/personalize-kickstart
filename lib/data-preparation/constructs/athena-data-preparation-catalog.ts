@@ -4,6 +4,7 @@ import * as glue from "@aws-cdk/aws-glue";
 import * as s3 from "@aws-cdk/aws-s3";
 import * as iam from "@aws-cdk/aws-iam";
 import * as sfn from "@aws-cdk/aws-stepfunctions";
+import * as logs from "@aws-cdk/aws-logs";
 import athenaPreparationDefinition from "../statemachines/athena-preparation";
 
 export interface AthenaDataPreparationProps {
@@ -186,6 +187,10 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
       resourceName: `${glueDatabase.databaseName}/*`,
     });
 
+    const logGroup = new logs.LogGroup(this, "state-machine-loggroup", {
+      // retention: this.node.tryGetContext("@aws-cdk/aws-logs:defaultRetentionInDays"),
+    });
+
     /* To get detailed information about the required IAM policy statements, check
      * - https://docs.aws.amazon.com/athena/latest/ug/example-policies-workgroup.html#example3-user-access
      * - https://aws.amazon.com/de/premiumsupport/knowledge-center/access-denied-athena/
@@ -194,6 +199,11 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
     const statemachine = new sfn.StateMachine(this, "state-machine", {
       definition: new sfn.Pass(this, "temp-pass"),
       timeout: cdk.Duration.minutes(5),
+      logs: {
+        destination: logGroup,
+        level: sfn.LogLevel.ERROR,
+      },
+      tracingEnabled: true,
       role: new iam.Role(this, "statemachine-role", {
         assumedBy: new iam.ServicePrincipal(`states.${cdk.Stack.of(this).region}.amazonaws.com`),
         inlinePolicies: {
