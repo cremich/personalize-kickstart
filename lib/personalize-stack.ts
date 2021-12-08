@@ -3,6 +3,7 @@ import * as ec2 from "@aws-cdk/aws-ec2";
 import { SageMakerNotebook } from "./constructs/sagemaker-notebook";
 import { MovielensDataPreparationPipeline } from "./data-preparation/constructs/movielens/pipeline";
 import { LogGroupRetention } from "./aspects/log-group-retention";
+import { CloudWatchAlarms } from "./aspects/cloudwatch-alarms";
 
 interface PersonalizeStackProps extends cdk.StackProps {
   readonly notebookInstanceName?: string;
@@ -30,5 +31,6 @@ export class PersonalizeStack extends cdk.Stack {
 
     cdk.Tags.of(this).add("application", "personalize");
     cdk.Aspects.of(this).add(new LogGroupRetention());
+    cdk.Aspects.of(this).add(new CloudWatchAlarms());
   }
 }
