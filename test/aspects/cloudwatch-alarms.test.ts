@@ -17,13 +17,7 @@ describe("Log group retention aspect", () => {
 
     const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::CloudWatch::Alarm", {
-      ComparisonOperator: "GreaterThanOrEqualToThreshold",
-      EvaluationPeriods: 1,
-      MetricName: "ExecutionsFailed",
       Namespace: "AWS/States",
-      Period: 300,
-      Statistic: "Sum",
-      Threshold: 1,
     });
   });
 });

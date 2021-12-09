@@ -1,17 +1,17 @@
-import { Stack, assertions } from "aws-cdk-lib";
-import { MovielensDataPreparationPipeline } from "../../../../lib/data-preparation/constructs/movielens/pipeline";
+import { assertions, Stack } from "aws-cdk-lib";
+import { MovielensDataPreprocessingStack } from "../../../lib/movielens/data-preprocessing/stack";
 
 let stack: Stack;
 
-describe("Data preparation pipeline construct", () => {
+describe("Movielens data preprocessing stack", () => {
   beforeEach(() => {
     stack = new Stack();
   });
 
   test("Raw data bucket is created", () => {
-    new MovielensDataPreparationPipeline(stack, "data-preparation", {});
+    const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {});
 
-    const assert = assertions.Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(nestedStack);
     assert.hasResourceProperties("AWS::S3::Bucket", {
       BucketEncryption: {
         ServerSideEncryptionConfiguration: [
@@ -35,7 +35,7 @@ describe("Data preparation pipeline construct", () => {
         },
         {
           Key: "component",
-          Value: "data-preparation",
+          Value: "data-preprocessing",
         },
       ],
       VersioningConfiguration: {
@@ -45,8 +45,8 @@ describe("Data preparation pipeline construct", () => {
   });
 
   test("Raw data bucket is deleted by default", () => {
-    new MovielensDataPreparationPipeline(stack, "data-preparation", {});
-    const assert = assertions.Template.fromStack(stack);
+    const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {});
+    const assert = assertions.Template.fromStack(nestedStack);
     assert.hasResource("AWS::S3::Bucket", {
       UpdateReplacePolicy: "Delete",
       DeletionPolicy: "Delete",
@@ -54,11 +54,11 @@ describe("Data preparation pipeline construct", () => {
   });
 
   test("Raw data bucket is set to retain if requested", () => {
-    new MovielensDataPreparationPipeline(stack, "data-preparation", {
-      retainRawData: true,
+    const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {
+      retainData: true,
     });
 
-    const assert = assertions.Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(nestedStack);
     assert.hasResource("AWS::S3::Bucket", {
       UpdateReplacePolicy: "Retain",
       DeletionPolicy: "Retain",

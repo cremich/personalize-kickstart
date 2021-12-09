@@ -1,7 +1,7 @@
 import { Stack, assertions } from "aws-cdk-lib";
 import { aws_s3 as s3 } from "aws-cdk-lib";
-import stateMachineDefinition from "../../../lib/data-preparation/statemachines/athena-preparation";
-import { AthenaDataPreparationWithGlueCatalog } from "../../../lib/data-preparation/constructs/athena-data-preparation-catalog";
+import { AthenaPreprocessing } from "../../../lib/data-preprocessing/constructs/athena-preprocessing";
+import stateMachineDefinition from "../../../lib/data-preprocessing/statemachines/athena-preprocessing-workflow";
 
 let stack: Stack;
 
@@ -11,37 +11,43 @@ describe("Athena data preparation with glue catalog construct", () => {
   });
 
   test("Statemachine to orchestrate athena queries is creatd", () => {
-    new AthenaDataPreparationWithGlueCatalog(stack, "data-preparation", {
+    new AthenaPreprocessing(stack, "data-preparation", {
       workgroupName: "test",
       databaseName: "test",
       rawDataBucket: new s3.Bucket(stack, "bucket"),
-      prepareItemsQuery: "SELECT ITEMS",
-      prepareInteractionsQuery: "SELECT INTERACTIONS",
-      itemsCrawlerS3TargetPath: `s3://bucket/items/`,
-      interactionsCrawlerS3TargetPath: `s3://bucket/interactions/`,
+      datasetSources: {
+        items: {
+          query: "SELECT ITEMS",
+          crawlerS3TargetPath: "s3://bucket/items/",
+        },
+        interactions: {
+          query: "SELECT INTERACTIONS",
+          crawlerS3TargetPath: `s3://bucket/interactions/`,
+        },
+      },
     });
 
     const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::StepFunctions::StateMachine", {
       DefinitionString: JSON.stringify(stateMachineDefinition),
-      Tags: [
-        {
-          Key: "component",
-          Value: "data-preparation",
-        },
-      ],
     });
   });
 
   test("Glue database is created", () => {
-    new AthenaDataPreparationWithGlueCatalog(stack, "data-preparation", {
+    new AthenaPreprocessing(stack, "data-preparation", {
       workgroupName: "test",
       databaseName: "test",
       rawDataBucket: new s3.Bucket(stack, "bucket"),
-      prepareItemsQuery: "SELECT ITEMS",
-      prepareInteractionsQuery: "SELECT INTERACTIONS",
-      itemsCrawlerS3TargetPath: `s3://bucket/items/`,
-      interactionsCrawlerS3TargetPath: `s3://bucket/interactions/`,
+      datasetSources: {
+        items: {
+          query: "SELECT ITEMS",
+          crawlerS3TargetPath: "s3://bucket/items/",
+        },
+        interactions: {
+          query: "SELECT INTERACTIONS",
+          crawlerS3TargetPath: `s3://bucket/interactions/`,
+        },
+      },
     });
 
     const assert = assertions.Template.fromStack(stack);
@@ -56,14 +62,20 @@ describe("Athena data preparation with glue catalog construct", () => {
   });
 
   test("Glue crawler for items is created", () => {
-    new AthenaDataPreparationWithGlueCatalog(stack, "data-preparation", {
+    new AthenaPreprocessing(stack, "data-preparation", {
       workgroupName: "test",
       databaseName: "test",
       rawDataBucket: new s3.Bucket(stack, "bucket"),
-      prepareItemsQuery: "SELECT ITEMS",
-      prepareInteractionsQuery: "SELECT INTERACTIONS",
-      itemsCrawlerS3TargetPath: `s3://bucket/items/`,
-      interactionsCrawlerS3TargetPath: `s3://bucket/interactions/`,
+      datasetSources: {
+        items: {
+          query: "SELECT ITEMS",
+          crawlerS3TargetPath: "s3://bucket/items/",
+        },
+        interactions: {
+          query: "SELECT INTERACTIONS",
+          crawlerS3TargetPath: `s3://bucket/interactions/`,
+        },
+      },
     });
     const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::Glue::Crawler", {
@@ -81,21 +93,26 @@ describe("Athena data preparation with glue catalog construct", () => {
         Ref: "datapreparationdatabaseD6FDDF3F",
       },
       Tags: {
-        component: "data-preparation",
         dataset: "items",
       },
     });
   });
 
   test("Glue crawler for interactions is created", () => {
-    new AthenaDataPreparationWithGlueCatalog(stack, "data-preparation", {
+    new AthenaPreprocessing(stack, "data-preparation", {
       workgroupName: "test",
       databaseName: "test",
       rawDataBucket: new s3.Bucket(stack, "bucket"),
-      prepareItemsQuery: "SELECT ITEMS",
-      prepareInteractionsQuery: "SELECT INTERACTIONS",
-      itemsCrawlerS3TargetPath: `s3://bucket/items/`,
-      interactionsCrawlerS3TargetPath: `s3://bucket/interactions/`,
+      datasetSources: {
+        items: {
+          query: "SELECT ITEMS",
+          crawlerS3TargetPath: "s3://bucket/items/",
+        },
+        interactions: {
+          query: "SELECT INTERACTIONS",
+          crawlerS3TargetPath: `s3://bucket/interactions/`,
+        },
+      },
     });
     const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::Glue::Crawler", {
@@ -112,23 +129,28 @@ describe("Athena data preparation with glue catalog construct", () => {
       DatabaseName: {
         Ref: "datapreparationdatabaseD6FDDF3F",
       },
-      Tags: {
-        component: "data-preparation",
-        dataset: "interactions",
-      },
     });
   });
 
   test("Glue crawler for users is created", () => {
-    new AthenaDataPreparationWithGlueCatalog(stack, "data-preparation", {
+    new AthenaPreprocessing(stack, "data-preparation", {
       workgroupName: "test",
       databaseName: "test",
       rawDataBucket: new s3.Bucket(stack, "bucket"),
-      prepareItemsQuery: "SELECT ITEMS",
-      prepareInteractionsQuery: "SELECT INTERACTIONS",
-      itemsCrawlerS3TargetPath: `s3://bucket/items/`,
-      interactionsCrawlerS3TargetPath: `s3://bucket/interactions/`,
-      usersCrawlerS3TargetPath: `s3://bucket/users/`,
+      datasetSources: {
+        items: {
+          query: "SELECT ITEMS",
+          crawlerS3TargetPath: "s3://bucket/items/",
+        },
+        interactions: {
+          query: "SELECT INTERACTIONS",
+          crawlerS3TargetPath: `s3://bucket/interactions/`,
+        },
+        users: {
+          query: "SELECT USERS",
+          crawlerS3TargetPath: `s3://bucket/users/`,
+        },
+      },
     });
     const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::Glue::Crawler", {
@@ -145,22 +167,24 @@ describe("Athena data preparation with glue catalog construct", () => {
       DatabaseName: {
         Ref: "datapreparationdatabaseD6FDDF3F",
       },
-      Tags: {
-        component: "data-preparation",
-        dataset: "users",
-      },
     });
   });
 
   test("Athena workgroup is enabled", () => {
-    new AthenaDataPreparationWithGlueCatalog(stack, "data-preparation", {
+    new AthenaPreprocessing(stack, "data-preparation", {
       workgroupName: "test",
       databaseName: "test",
       rawDataBucket: new s3.Bucket(stack, "bucket"),
-      prepareItemsQuery: "SELECT ITEMS",
-      prepareInteractionsQuery: "SELECT INTERACTIONS",
-      itemsCrawlerS3TargetPath: `s3://bucket/items/`,
-      interactionsCrawlerS3TargetPath: `s3://bucket/interactions/`,
+      datasetSources: {
+        items: {
+          query: "SELECT ITEMS",
+          crawlerS3TargetPath: "s3://bucket/items/",
+        },
+        interactions: {
+          query: "SELECT INTERACTIONS",
+          crawlerS3TargetPath: `s3://bucket/interactions/`,
+        },
+      },
     });
     const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::Athena::WorkGroup", {
@@ -168,12 +192,6 @@ describe("Athena data preparation with glue catalog construct", () => {
       Description: "Personalize kickstart data preparation",
       RecursiveDeleteOption: true,
       State: "ENABLED",
-      Tags: [
-        {
-          Key: "component",
-          Value: "data-preparation",
-        },
-      ],
       WorkGroupConfiguration: {
         PublishCloudWatchMetricsEnabled: true,
         RequesterPaysEnabled: false,
@@ -199,12 +217,16 @@ describe("Athena data preparation with glue catalog construct", () => {
   });
 
   test("Named query for interactions is created", () => {
-    new AthenaDataPreparationWithGlueCatalog(stack, "data-preparation", {
+    new AthenaPreprocessing(stack, "data-preparation", {
       workgroupName: "test",
       databaseName: "test",
       rawDataBucket: new s3.Bucket(stack, "bucket"),
-      prepareInteractionsQuery: "SELECT INTERACTIONS",
-      interactionsCrawlerS3TargetPath: `s3://bucket/interactions/`,
+      datasetSources: {
+        interactions: {
+          query: "SELECT INTERACTIONS",
+          crawlerS3TargetPath: `s3://bucket/interactions/`,
+        },
+      },
     });
     const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::Athena::NamedQuery", {
@@ -218,14 +240,20 @@ describe("Athena data preparation with glue catalog construct", () => {
   });
 
   test("Named query for users is created", () => {
-    new AthenaDataPreparationWithGlueCatalog(stack, "data-preparation", {
+    new AthenaPreprocessing(stack, "data-preparation", {
       workgroupName: "test",
       databaseName: "test",
       rawDataBucket: new s3.Bucket(stack, "bucket"),
-      prepareInteractionsQuery: "SELECT INTERACTIONS",
-      prepareUsersQuery: "SELECT USERS",
-      interactionsCrawlerS3TargetPath: `s3://bucket/interactions/`,
-      usersCrawlerS3TargetPath: `s3://bucket/users/`,
+      datasetSources: {
+        interactions: {
+          query: "SELECT INTERACTIONS",
+          crawlerS3TargetPath: `s3://bucket/interactions/`,
+        },
+        users: {
+          query: "SELECT USERS",
+          crawlerS3TargetPath: `s3://bucket/users/`,
+        },
+      },
     });
     const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::Athena::NamedQuery", {
@@ -239,16 +267,20 @@ describe("Athena data preparation with glue catalog construct", () => {
   });
 
   test("Named query for items is created", () => {
-    new AthenaDataPreparationWithGlueCatalog(stack, "data-preparation", {
+    new AthenaPreprocessing(stack, "data-preparation", {
       workgroupName: "test",
       databaseName: "test",
       rawDataBucket: new s3.Bucket(stack, "bucket"),
-      prepareInteractionsQuery: "SELECT INTERACTIONS",
-      prepareUsersQuery: "SELECT USERS",
-      prepareItemsQuery: "SELECT ITEMS",
-      interactionsCrawlerS3TargetPath: `s3://bucket/interactions/`,
-      usersCrawlerS3TargetPath: `s3://bucket/users/`,
-      itemsCrawlerS3TargetPath: `s3://bucket/items/`,
+      datasetSources: {
+        items: {
+          query: "SELECT ITEMS",
+          crawlerS3TargetPath: "s3://bucket/items/",
+        },
+        interactions: {
+          query: "SELECT INTERACTIONS",
+          crawlerS3TargetPath: `s3://bucket/interactions/`,
+        },
+      },
     });
     const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::Athena::NamedQuery", {

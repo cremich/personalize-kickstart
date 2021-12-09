@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { RemovalPolicy, Tags, CfnOutput, Stack, Duration } from "aws-cdk-lib";
+import { RemovalPolicy, Tags, Stack, Duration } from "aws-cdk-lib";
 import { aws_athena as athena } from "aws-cdk-lib";
 import * as glueAlpha from "@aws-cdk/aws-glue-alpha";
 import { aws_s3 as s3 } from "aws-cdk-lib";
@@ -7,27 +7,43 @@ import { aws_glue as glue } from "aws-cdk-lib";
 import { aws_iam as iam } from "aws-cdk-lib";
 import { aws_stepfunctions as sfn } from "aws-cdk-lib";
 import { aws_logs as logs } from "aws-cdk-lib";
-import athenaPreparationDefinition from "../statemachines/athena-preparation";
+import athenaPreparationDefinition from "../statemachines/athena-preprocessing-workflow";
 
-export interface AthenaDataPreparationProps {
+interface DatasetSources {
+  items?: DatasetSource;
+  users?: DatasetSource;
+  interactions: DatasetSource;
+}
+
+interface DatasetSource {
+  query: string;
+  crawlerS3TargetPath: string;
+}
+
+export interface AthenaPreprocessingProps {
   workgroupName: string;
   databaseName: string;
   retainResults?: boolean;
   rawDataBucket: s3.Bucket;
-  prepareItemsQuery?: string;
-  prepareUsersQuery?: string;
-  prepareInteractionsQuery: string;
-  itemsCrawlerS3TargetPath?: string;
-  usersCrawlerS3TargetPath?: string;
-  interactionsCrawlerS3TargetPath: string;
+  datasetSources: DatasetSources;
 }
 
-export class AthenaDataPreparationWithGlueCatalog extends Construct {
-  private itemsCrawler?: glue.CfnCrawler;
-  private usersCrawler?: glue.CfnCrawler;
-  private interactionsCrawler: glue.CfnCrawler;
+export class AthenaPreprocessing extends Construct {
+  glueDatabase: glueAlpha.Database;
+  items?: {
+    crawler: glue.CfnCrawler;
+    athenaQuery: athena.CfnNamedQuery;
+  };
+  users?: {
+    crawler: glue.CfnCrawler;
+    athenaQuery: athena.CfnNamedQuery;
+  };
+  interactions: {
+    crawler: glue.CfnCrawler;
+    athenaQuery: athena.CfnNamedQuery;
+  };
 
-  constructor(scope: Construct, id: string, props: AthenaDataPreparationProps) {
+  constructor(scope: Construct, id: string, props: AthenaPreprocessingProps) {
     super(scope, id);
 
     const queryResults = new s3.Bucket(this, "athena-results", {
@@ -57,60 +73,8 @@ export class AthenaDataPreparationWithGlueCatalog extends Construct {
       },
     });
 
-    const glueDatabase = new glueAlpha.Database(this, "database", {
+    this.glueDatabase = new glueAlpha.Database(this, "database", {
       databaseName: props.databaseName,
-    });
-
-    if (props.itemsCrawlerS3TargetPath) {
-      this.itemsCrawler = new glue.CfnCrawler(this, "items-crawler", {
-        databaseName: glueDatabase.databaseName,
-        role: glueRole.roleArn,
-        targets: {
-          s3Targets: [{ path: props.itemsCrawlerS3TargetPath }],
-        },
-      });
-
-      Tags.of(this.itemsCrawler).add("dataset", "items");
-
-      new CfnOutput(this, "items-crawler-name", {
-        value: this.itemsCrawler.ref,
-        description: "The name of the items crawler for athena based data preparation",
-      });
-    }
-
-    if (props.usersCrawlerS3TargetPath) {
-      this.usersCrawler = new glue.CfnCrawler(this, "users-crawler", {
-        databaseName: glueDatabase.databaseName,
-        role: glueRole.roleArn,
-        targets: {
-          s3Targets: [{ path: props.usersCrawlerS3TargetPath }],
-        },
-      });
-      Tags.of(this.usersCrawler).add("dataset", "users");
-
-      new CfnOutput(this, "users-crawler-name", {
-        value: this.usersCrawler.ref,
-        description: "The name of the users crawler for athena based data preparation",
-      });
-    }
-
-    this.interactionsCrawler = new glue.CfnCrawler(this, "interactions-crawler", {
-      databaseName: glueDatabase.databaseName,
-      role: glueRole.roleArn,
-      targets: {
-        s3Targets: [{ path: props.interactionsCrawlerS3TargetPath }],
-      },
-    });
-    Tags.of(this.interactionsCrawler).add("dataset", "interactions");
-
-    new CfnOutput(this, "interactions-crawler-name", {
-      value: this.interactionsCrawler.ref,
-      description: "The name of the interactions crawler for athena based data preparation",
-    });
-
-    new CfnOutput(this, "glue-database-name", {
-      value: glueDatabase.databaseName,
-      description: "The name of the glue database for athena based data preparation",
     });
 
     const workgroup = new athena.CfnWorkGroup(this, "workgroup", {
@@ -130,50 +94,81 @@ export class AthenaDataPreparationWithGlueCatalog extends Construct {
       },
     });
 
-    if (props.prepareItemsQuery) {
-      const prepareItemsQuery = new athena.CfnNamedQuery(this, "prepare-items", {
-        queryString: props.prepareItemsQuery,
-        database: glueDatabase.databaseName,
+    if (props.datasetSources?.items) {
+      const crawler = new glue.CfnCrawler(this, "items-crawler", {
+        databaseName: this.glueDatabase.databaseName,
+        role: glueRole.roleArn,
+        targets: {
+          s3Targets: [{ path: props.datasetSources.items.crawlerS3TargetPath }],
+        },
+      });
+
+      const athenaQuery = new athena.CfnNamedQuery(this, "prepare-items", {
+        queryString: props.datasetSources.items.query,
+        database: this.glueDatabase.databaseName,
         name: "PrepareItems",
         workGroup: workgroup.name,
       });
-      prepareItemsQuery.addDependsOn(workgroup);
-      new CfnOutput(this, "prepare-items-athena-query-id", {
-        value: prepareItemsQuery.ref,
-        description: "The id of the query to prepare items data",
-        exportName: "prepare-items-athena-query-id",
-      });
+      athenaQuery.addDependsOn(workgroup);
+
+      this.items = {
+        crawler,
+        athenaQuery,
+      };
+
+      Tags.of(crawler).add("dataset", "items");
+      Tags.of(athenaQuery).add("dataset", "items");
     }
 
-    if (props.prepareUsersQuery) {
-      const prepareUsersQuery = new athena.CfnNamedQuery(this, "prepare-users", {
-        queryString: props.prepareUsersQuery,
-        database: glueDatabase.databaseName,
+    if (props.datasetSources?.users) {
+      const crawler = new glue.CfnCrawler(this, "users-crawler", {
+        databaseName: this.glueDatabase.databaseName,
+        role: glueRole.roleArn,
+        targets: {
+          s3Targets: [{ path: props.datasetSources.users.crawlerS3TargetPath }],
+        },
+      });
+
+      const athenaQuery = new athena.CfnNamedQuery(this, "prepare-users", {
+        queryString: props.datasetSources.users.query,
+        database: this.glueDatabase.databaseName,
         name: "PrepareUsers",
         workGroup: workgroup.name,
       });
-      prepareUsersQuery.addDependsOn(workgroup);
+      athenaQuery.addDependsOn(workgroup);
 
-      new CfnOutput(this, "prepare-users-athena-query-id", {
-        value: prepareUsersQuery.ref,
-        description: "The id of the query to prepare users data",
-        exportName: "prepare-users-athena-query-id",
-      });
+      this.users = {
+        crawler,
+        athenaQuery,
+      };
+
+      Tags.of(crawler).add("dataset", "users");
+      Tags.of(athenaQuery).add("dataset", "users");
     }
 
-    const prepareInteractionsQuery = new athena.CfnNamedQuery(this, "prepare-interactions", {
-      queryString: props.prepareInteractionsQuery,
-      database: glueDatabase.databaseName,
+    const crawler = new glue.CfnCrawler(this, "interactions-crawler", {
+      databaseName: this.glueDatabase.databaseName,
+      role: glueRole.roleArn,
+      targets: {
+        s3Targets: [{ path: props.datasetSources?.interactions.crawlerS3TargetPath }],
+      },
+    });
+
+    const athenaQuery = new athena.CfnNamedQuery(this, "prepare-interactions", {
+      queryString: props.datasetSources.interactions.query,
+      database: this.glueDatabase.databaseName,
       name: "PrepareInteractions",
       workGroup: workgroup.name,
     });
-    prepareInteractionsQuery.addDependsOn(workgroup);
+    athenaQuery.addDependsOn(workgroup);
 
-    new CfnOutput(this, "prepare-interactions-athena-query-id", {
-      value: prepareInteractionsQuery.ref,
-      description: "The id of the query to prepare interactions data",
-      exportName: "prepare-interactions-athena-query-id",
-    });
+    this.interactions = {
+      crawler,
+      athenaQuery,
+    };
+
+    Tags.of(crawler).add("dataset", "interactions");
+    Tags.of(athenaQuery).add("dataset", "interactions");
 
     const workgroupArn = Stack.of(this).formatArn({
       service: "athena",
@@ -184,12 +179,10 @@ export class AthenaDataPreparationWithGlueCatalog extends Construct {
     const glueDatabaseTableArn = Stack.of(this).formatArn({
       service: "glue",
       resource: "table",
-      resourceName: `${glueDatabase.databaseName}/*`,
+      resourceName: `${this.glueDatabase.databaseName}/*`,
     });
 
-    const logGroup = new logs.LogGroup(this, "state-machine-loggroup", {
-      // retention: this.node.tryGetContext("@aws-cdk/aws-logs:defaultRetentionInDays"),
-    });
+    const logGroup = new logs.LogGroup(this, "state-machine-loggroup");
 
     /* To get detailed information about the required IAM policy statements, check
      * - https://docs.aws.amazon.com/athena/latest/ug/example-policies-workgroup.html#example3-user-access
@@ -214,7 +207,7 @@ export class AthenaDataPreparationWithGlueCatalog extends Construct {
                 actions: ["glue:GetCrawler", "glue:StartCrawler"],
               }),
               new iam.PolicyStatement({
-                resources: [glueDatabase.catalogArn, glueDatabase.databaseArn, glueDatabaseTableArn],
+                resources: [this.glueDatabase.catalogArn, this.glueDatabase.databaseArn, glueDatabaseTableArn],
                 actions: ["glue:GetDatabase", "glue:GetTable", "glue:GetPartitions"],
               }),
             ],
@@ -265,8 +258,6 @@ export class AthenaDataPreparationWithGlueCatalog extends Construct {
 
     const cfnStatemachine = statemachine.node.defaultChild as sfn.CfnStateMachine;
     cfnStatemachine.definitionString = JSON.stringify(athenaPreparationDefinition);
-
-    Tags.of(this).add("component", "data-preparation");
   }
 
   private getGlueCrawlerResourcesForIamPolicy(): string[] {
@@ -275,23 +266,23 @@ export class AthenaDataPreparationWithGlueCatalog extends Construct {
     const interactionsCrawlerArn = Stack.of(this).formatArn({
       service: "glue",
       resource: "crawler",
-      resourceName: `${this.interactionsCrawler.ref}`,
+      resourceName: `${this.interactions.crawler.ref}`,
     });
     resources.push(interactionsCrawlerArn);
 
-    if (this.itemsCrawler) {
+    if (this.items) {
       const itemsCrawlerArn = Stack.of(this).formatArn({
         service: "glue",
         resource: "crawler",
-        resourceName: `${this.itemsCrawler.ref}`,
+        resourceName: `${this.items.crawler.ref}`,
       });
       resources.push(itemsCrawlerArn);
     }
-    if (this.usersCrawler) {
+    if (this.users) {
       const usersCrawlerArn = Stack.of(this).formatArn({
         service: "glue",
         resource: "crawler",
-        resourceName: `${this.usersCrawler.ref}`,
+        resourceName: `${this.users.crawler.ref}`,
       });
       resources.push(usersCrawlerArn);
     }

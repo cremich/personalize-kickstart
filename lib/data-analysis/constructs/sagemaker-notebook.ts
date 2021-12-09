@@ -60,7 +60,5 @@ export class SageMakerNotebook extends Construct {
       notebookInstanceName: props.notebookInstanceName,
       volumeSizeInGb: props.volumeSizeInGb,
     });
-
-    Tags.of(this).add("component", "sagemaker");
   }
 }

@@ -1,6 +1,6 @@
 import { Stack, assertions } from "aws-cdk-lib";
 import { aws_ec2 as ec2 } from "aws-cdk-lib";
-import { SageMakerNotebook } from "../../lib/constructs/sagemaker-notebook";
+import { SageMakerNotebook } from "../../../lib/data-analysis/constructs/sagemaker-notebook";
 
 let stack: Stack;
 
@@ -16,22 +16,6 @@ describe("Sagemaker notebook construct", () => {
 
     const assert = assertions.Template.fromStack(stack);
     assert.resourceCountIs("AWS::SageMaker::NotebookInstance", 1);
-  });
-
-  test("Notebook is tagged with component tag", () => {
-    new SageMakerNotebook(stack, "sagemaker-notebook", {
-      instanceType: new ec2.InstanceType("ml.t2.medium"),
-    });
-
-    const assert = assertions.Template.fromStack(stack);
-    assert.hasResourceProperties("AWS::SageMaker::NotebookInstance", {
-      Tags: assertions.Match.arrayWith([
-        {
-          Key: "component",
-          Value: "sagemaker",
-        },
-      ]),
-    });
   });
 
   test("InstanceType can be set", () => {
@@ -185,10 +169,6 @@ describe("Sagemaker notebook construct", () => {
         {
           Key: "aws-cdk:auto-delete-objects",
           Value: "true",
-        },
-        {
-          Key: "component",
-          Value: "sagemaker",
         },
       ],
       VersioningConfiguration: {
