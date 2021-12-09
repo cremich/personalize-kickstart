@@ -1,19 +1,20 @@
-import * as cdk from "@aws-cdk/core";
-import * as sfn from "@aws-cdk/aws-stepfunctions";
-import * as cw from "@aws-cdk/aws-cloudwatch";
+import { Construct } from "constructs";
+import { Duration } from "aws-cdk-lib";
+import { aws_stepfunctions as sfn } from "aws-cdk-lib";
+import { aws_cloudwatch as cw } from "aws-cdk-lib";
 
 export interface StateMachineAlarmsProps {
   stateMachine: sfn.StateMachine;
 }
 
-export class StateMachineAlarms extends cdk.Construct {
-  constructor(scope: cdk.Construct, id: string, props: StateMachineAlarmsProps) {
+export class StateMachineAlarms extends Construct {
+  constructor(scope: Construct, id: string, props: StateMachineAlarmsProps) {
     super(scope, id);
     props.stateMachine
       .metricFailed()
       .with({
         statistic: "sum",
-        period: cdk.Duration.minutes(5),
+        period: Duration.minutes(5),
       })
       .createAlarm(props.stateMachine, "failed-executions", {
         threshold: 1,

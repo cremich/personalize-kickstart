@@ -1,18 +1,17 @@
-import * as cdk from "@aws-cdk/core";
-import { Template } from "@aws-cdk/assertions";
+import { Stack, assertions } from "aws-cdk-lib";
 import { MovielensDataPreparationPipeline } from "../../../../lib/data-preparation/constructs/movielens/pipeline";
 
-let stack: cdk.Stack;
+let stack: Stack;
 
 describe("Data preparation pipeline construct", () => {
   beforeEach(() => {
-    stack = new cdk.Stack();
+    stack = new Stack();
   });
 
   test("Raw data bucket is created", () => {
     new MovielensDataPreparationPipeline(stack, "data-preparation", {});
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::S3::Bucket", {
       BucketEncryption: {
         ServerSideEncryptionConfiguration: [
@@ -47,7 +46,7 @@ describe("Data preparation pipeline construct", () => {
 
   test("Raw data bucket is deleted by default", () => {
     new MovielensDataPreparationPipeline(stack, "data-preparation", {});
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResource("AWS::S3::Bucket", {
       UpdateReplacePolicy: "Delete",
       DeletionPolicy: "Delete",
@@ -59,7 +58,7 @@ describe("Data preparation pipeline construct", () => {
       retainRawData: true,
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResource("AWS::S3::Bucket", {
       UpdateReplacePolicy: "Retain",
       DeletionPolicy: "Retain",

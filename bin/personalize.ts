@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import "source-map-support/register";
-import * as cdk from "@aws-cdk/core";
+import { App } from "aws-cdk-lib";
 import { PersonalizeStack } from "../lib/personalize-stack";
 
-const app = new cdk.App();
+const app = new App();
 const sandbox = app.node.tryGetContext("sandbox") || "sandbox";
 
 //SANDBOX stage

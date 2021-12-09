@@ -1,8 +1,9 @@
-import * as cdk from "@aws-cdk/core";
-import * as ec2 from "@aws-cdk/aws-ec2";
-import * as iam from "@aws-cdk/aws-iam";
-import * as s3 from "@aws-cdk/aws-s3";
-import * as sagemaker from "@aws-cdk/aws-sagemaker";
+import { Construct } from "constructs";
+import { RemovalPolicy, Tags } from "aws-cdk-lib";
+import { aws_ec2 as ec2 } from "aws-cdk-lib";
+import { aws_iam as iam } from "aws-cdk-lib";
+import { aws_s3 as s3 } from "aws-cdk-lib";
+import { aws_sagemaker as sagemaker } from "aws-cdk-lib";
 
 export interface SageMakerNotebookProps {
   readonly notebookInstanceName?: string;
@@ -10,11 +11,11 @@ export interface SageMakerNotebookProps {
   readonly instanceType: ec2.InstanceType;
 }
 
-export class SageMakerNotebook extends cdk.Construct {
+export class SageMakerNotebook extends Construct {
   public sagemakerNotebookInstance: sagemaker.CfnNotebookInstance;
   public bucket: s3.Bucket;
 
-  constructor(scope: cdk.Construct, id: string, props: SageMakerNotebookProps) {
+  constructor(scope: Construct, id: string, props: SageMakerNotebookProps) {
     super(scope, id);
 
     this.bucket = new s3.Bucket(this, "data-analysis", {
@@ -22,7 +23,7 @@ export class SageMakerNotebook extends cdk.Construct {
       autoDeleteObjects: true,
       versioned: true,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: RemovalPolicy.DESTROY,
     });
 
     const sagemakerExecutionRole = new iam.Role(this, "sagemaker-execution-role", {
@@ -60,6 +61,6 @@ export class SageMakerNotebook extends cdk.Construct {
       volumeSizeInGb: props.volumeSizeInGb,
     });
 
-    cdk.Tags.of(this).add("component", "sagemaker");
+    Tags.of(this).add("component", "sagemaker");
   }
 }

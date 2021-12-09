@@ -1,20 +1,19 @@
-import * as cdk from "@aws-cdk/core";
-import * as logs from "@aws-cdk/aws-logs";
-import { Template } from "@aws-cdk/assertions";
+import { Stack, Aspects, assertions } from "aws-cdk-lib";
+import { aws_logs as logs } from "aws-cdk-lib";
 import { LogGroupRetention } from "../../lib/aspects/log-group-retention";
 
-let stack: cdk.Stack;
+let stack: Stack;
 
 describe("Log group retention aspect", () => {
   beforeEach(() => {
-    stack = new cdk.Stack();
+    stack = new Stack();
   });
 
   test("Retention for log groups are set", () => {
     new logs.LogGroup(stack, "log-group");
-    cdk.Aspects.of(stack).add(new LogGroupRetention());
+    Aspects.of(stack).add(new LogGroupRetention());
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::Logs::LogGroup", {
       RetentionInDays: 5,
     });

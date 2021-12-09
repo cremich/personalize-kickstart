@@ -1,9 +1,10 @@
-import * as cdk from "@aws-cdk/core";
-import * as sfn from "@aws-cdk/aws-stepfunctions";
+import { IConstruct } from "constructs";
+import { IAspect } from "aws-cdk-lib";
+import { aws_stepfunctions as sfn } from "aws-cdk-lib";
 import { StateMachineAlarms } from "../monitoring/constructs/statemachine-alarms";
 
-export class CloudWatchAlarms implements cdk.IAspect {
-  public visit(node: cdk.IConstruct): void {
+export class CloudWatchAlarms implements IAspect {
+  public visit(node: IConstruct): void {
     const constructId = node.node.id;
     if (node instanceof sfn.StateMachine) {
       new StateMachineAlarms(node, `alarms-${constructId}`, {

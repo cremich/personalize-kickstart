@@ -1,13 +1,12 @@
-import * as cdk from "@aws-cdk/core";
-import * as ec2 from "@aws-cdk/aws-ec2";
-import { Match, Template } from "@aws-cdk/assertions";
+import { Stack, assertions } from "aws-cdk-lib";
+import { aws_ec2 as ec2 } from "aws-cdk-lib";
 import { SageMakerNotebook } from "../../lib/constructs/sagemaker-notebook";
 
-let stack: cdk.Stack;
+let stack: Stack;
 
 describe("Sagemaker notebook construct", () => {
   beforeEach(() => {
-    stack = new cdk.Stack();
+    stack = new Stack();
   });
 
   test("One sagemaker notebook is provisioned", () => {
@@ -15,7 +14,7 @@ describe("Sagemaker notebook construct", () => {
       instanceType: new ec2.InstanceType("ml.t2.medium"),
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.resourceCountIs("AWS::SageMaker::NotebookInstance", 1);
   });
 
@@ -24,9 +23,9 @@ describe("Sagemaker notebook construct", () => {
       instanceType: new ec2.InstanceType("ml.t2.medium"),
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::SageMaker::NotebookInstance", {
-      Tags: Match.arrayWith([
+      Tags: assertions.Match.arrayWith([
         {
           Key: "component",
           Value: "sagemaker",
@@ -40,7 +39,7 @@ describe("Sagemaker notebook construct", () => {
       instanceType: new ec2.InstanceType("ml.t2.medium"),
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::SageMaker::NotebookInstance", {
       InstanceType: "ml.t2.medium",
     });
@@ -52,7 +51,7 @@ describe("Sagemaker notebook construct", () => {
       notebookInstanceName: "test-instance",
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::SageMaker::NotebookInstance", {
       NotebookInstanceName: "test-instance",
     });
@@ -64,7 +63,7 @@ describe("Sagemaker notebook construct", () => {
       volumeSizeInGb: 64,
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::SageMaker::NotebookInstance", {
       VolumeSizeInGB: 64,
     });
@@ -75,9 +74,9 @@ describe("Sagemaker notebook construct", () => {
       instanceType: new ec2.InstanceType("ml.t2.medium"),
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::IAM::Role", {
-      AssumeRolePolicyDocument: Match.objectEquals({
+      AssumeRolePolicyDocument: assertions.Match.objectEquals({
         Statement: [
           {
             Action: "sts:AssumeRole",
@@ -97,9 +96,9 @@ describe("Sagemaker notebook construct", () => {
       instanceType: new ec2.InstanceType("ml.t2.medium"),
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::IAM::Role", {
-      ManagedPolicyArns: Match.arrayEquals([
+      ManagedPolicyArns: assertions.Match.arrayEquals([
         {
           "Fn::Join": [
             "",
@@ -122,9 +121,9 @@ describe("Sagemaker notebook construct", () => {
       instanceType: new ec2.InstanceType("ml.t2.medium"),
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::IAM::Role", {
-      Policies: Match.arrayEquals([
+      Policies: assertions.Match.arrayEquals([
         {
           PolicyDocument: {
             Statement: [
@@ -165,7 +164,7 @@ describe("Sagemaker notebook construct", () => {
       volumeSizeInGb: 64,
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResourceProperties("AWS::S3::Bucket", {
       BucketEncryption: {
         ServerSideEncryptionConfiguration: [
@@ -204,7 +203,7 @@ describe("Sagemaker notebook construct", () => {
       volumeSizeInGb: 64,
     });
 
-    const assert = Template.fromStack(stack);
+    const assert = assertions.Template.fromStack(stack);
     assert.hasResource("AWS::S3::Bucket", {
       UpdateReplacePolicy: "Delete",
       DeletionPolicy: "Delete",

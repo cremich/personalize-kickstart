@@ -1,10 +1,12 @@
-import * as cdk from "@aws-cdk/core";
-import * as athena from "@aws-cdk/aws-athena";
-import * as glue from "@aws-cdk/aws-glue";
-import * as s3 from "@aws-cdk/aws-s3";
-import * as iam from "@aws-cdk/aws-iam";
-import * as sfn from "@aws-cdk/aws-stepfunctions";
-import * as logs from "@aws-cdk/aws-logs";
+import { Construct } from "constructs";
+import { RemovalPolicy, Tags, CfnOutput, Stack, Duration } from "aws-cdk-lib";
+import { aws_athena as athena } from "aws-cdk-lib";
+import * as glueAlpha from "@aws-cdk/aws-glue-alpha";
+import { aws_s3 as s3 } from "aws-cdk-lib";
+import { aws_glue as glue } from "aws-cdk-lib";
+import { aws_iam as iam } from "aws-cdk-lib";
+import { aws_stepfunctions as sfn } from "aws-cdk-lib";
+import { aws_logs as logs } from "aws-cdk-lib";
 import athenaPreparationDefinition from "../statemachines/athena-preparation";
 
 export interface AthenaDataPreparationProps {
@@ -20,12 +22,12 @@ export interface AthenaDataPreparationProps {
   interactionsCrawlerS3TargetPath: string;
 }
 
-export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
+export class AthenaDataPreparationWithGlueCatalog extends Construct {
   private itemsCrawler?: glue.CfnCrawler;
   private usersCrawler?: glue.CfnCrawler;
   private interactionsCrawler: glue.CfnCrawler;
 
-  constructor(scope: cdk.Construct, id: string, props: AthenaDataPreparationProps) {
+  constructor(scope: Construct, id: string, props: AthenaDataPreparationProps) {
     super(scope, id);
 
     const queryResults = new s3.Bucket(this, "athena-results", {
@@ -33,7 +35,7 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
       versioned: true,
       autoDeleteObjects: props.retainResults ? false : true,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: props.retainResults ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      removalPolicy: props.retainResults ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     });
 
     const glueRole = new iam.Role(this, "glue-role", {
@@ -55,7 +57,7 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
       },
     });
 
-    const glueDatabase = new glue.Database(this, "database", {
+    const glueDatabase = new glueAlpha.Database(this, "database", {
       databaseName: props.databaseName,
     });
 
@@ -68,9 +70,9 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
         },
       });
 
-      cdk.Tags.of(this.itemsCrawler).add("dataset", "items");
+      Tags.of(this.itemsCrawler).add("dataset", "items");
 
-      new cdk.CfnOutput(this, "items-crawler-name", {
+      new CfnOutput(this, "items-crawler-name", {
         value: this.itemsCrawler.ref,
         description: "The name of the items crawler for athena based data preparation",
       });
@@ -84,9 +86,9 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
           s3Targets: [{ path: props.usersCrawlerS3TargetPath }],
         },
       });
-      cdk.Tags.of(this.usersCrawler).add("dataset", "users");
+      Tags.of(this.usersCrawler).add("dataset", "users");
 
-      new cdk.CfnOutput(this, "users-crawler-name", {
+      new CfnOutput(this, "users-crawler-name", {
         value: this.usersCrawler.ref,
         description: "The name of the users crawler for athena based data preparation",
       });
@@ -99,14 +101,14 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
         s3Targets: [{ path: props.interactionsCrawlerS3TargetPath }],
       },
     });
-    cdk.Tags.of(this.interactionsCrawler).add("dataset", "interactions");
+    Tags.of(this.interactionsCrawler).add("dataset", "interactions");
 
-    new cdk.CfnOutput(this, "interactions-crawler-name", {
+    new CfnOutput(this, "interactions-crawler-name", {
       value: this.interactionsCrawler.ref,
       description: "The name of the interactions crawler for athena based data preparation",
     });
 
-    new cdk.CfnOutput(this, "glue-database-name", {
+    new CfnOutput(this, "glue-database-name", {
       value: glueDatabase.databaseName,
       description: "The name of the glue database for athena based data preparation",
     });
@@ -136,7 +138,7 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
         workGroup: workgroup.name,
       });
       prepareItemsQuery.addDependsOn(workgroup);
-      new cdk.CfnOutput(this, "prepare-items-athena-query-id", {
+      new CfnOutput(this, "prepare-items-athena-query-id", {
         value: prepareItemsQuery.ref,
         description: "The id of the query to prepare items data",
         exportName: "prepare-items-athena-query-id",
@@ -152,7 +154,7 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
       });
       prepareUsersQuery.addDependsOn(workgroup);
 
-      new cdk.CfnOutput(this, "prepare-users-athena-query-id", {
+      new CfnOutput(this, "prepare-users-athena-query-id", {
         value: prepareUsersQuery.ref,
         description: "The id of the query to prepare users data",
         exportName: "prepare-users-athena-query-id",
@@ -167,23 +169,21 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
     });
     prepareInteractionsQuery.addDependsOn(workgroup);
 
-    new cdk.CfnOutput(this, "prepare-interactions-athena-query-id", {
+    new CfnOutput(this, "prepare-interactions-athena-query-id", {
       value: prepareInteractionsQuery.ref,
       description: "The id of the query to prepare interactions data",
       exportName: "prepare-interactions-athena-query-id",
     });
 
-    const workgroupArn = cdk.Stack.of(this).formatArn({
+    const workgroupArn = Stack.of(this).formatArn({
       service: "athena",
       resource: "workgroup",
-      sep: "/",
       resourceName: `${workgroup.name}`,
     });
 
-    const glueDatabaseTableArn = cdk.Stack.of(this).formatArn({
+    const glueDatabaseTableArn = Stack.of(this).formatArn({
       service: "glue",
       resource: "table",
-      sep: "/",
       resourceName: `${glueDatabase.databaseName}/*`,
     });
 
@@ -198,14 +198,14 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
      */
     const statemachine = new sfn.StateMachine(this, "state-machine", {
       definition: new sfn.Pass(this, "temp-pass"),
-      timeout: cdk.Duration.minutes(5),
+      timeout: Duration.minutes(5),
       logs: {
         destination: logGroup,
         level: sfn.LogLevel.ERROR,
       },
       tracingEnabled: true,
       role: new iam.Role(this, "statemachine-role", {
-        assumedBy: new iam.ServicePrincipal(`states.${cdk.Stack.of(this).region}.amazonaws.com`),
+        assumedBy: new iam.ServicePrincipal(`states.${Stack.of(this).region}.amazonaws.com`),
         inlinePolicies: {
           glueAccess: new iam.PolicyDocument({
             statements: [
@@ -266,34 +266,31 @@ export class AthenaDataPreparationWithGlueCatalog extends cdk.Construct {
     const cfnStatemachine = statemachine.node.defaultChild as sfn.CfnStateMachine;
     cfnStatemachine.definitionString = JSON.stringify(athenaPreparationDefinition);
 
-    cdk.Tags.of(this).add("component", "data-preparation");
+    Tags.of(this).add("component", "data-preparation");
   }
 
   private getGlueCrawlerResourcesForIamPolicy(): string[] {
     const resources: string[] = [];
 
-    const interactionsCrawlerArn = cdk.Stack.of(this).formatArn({
+    const interactionsCrawlerArn = Stack.of(this).formatArn({
       service: "glue",
       resource: "crawler",
-      sep: "/",
       resourceName: `${this.interactionsCrawler.ref}`,
     });
     resources.push(interactionsCrawlerArn);
 
     if (this.itemsCrawler) {
-      const itemsCrawlerArn = cdk.Stack.of(this).formatArn({
+      const itemsCrawlerArn = Stack.of(this).formatArn({
         service: "glue",
         resource: "crawler",
-        sep: "/",
         resourceName: `${this.itemsCrawler.ref}`,
       });
       resources.push(itemsCrawlerArn);
     }
     if (this.usersCrawler) {
-      const usersCrawlerArn = cdk.Stack.of(this).formatArn({
+      const usersCrawlerArn = Stack.of(this).formatArn({
         service: "glue",
         resource: "crawler",
-        sep: "/",
         resourceName: `${this.usersCrawler.ref}`,
       });
       resources.push(usersCrawlerArn);
