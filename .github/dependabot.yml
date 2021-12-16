@@ -7,6 +7,3 @@ updates:
     # Check the npm registry for updates weekly
     schedule:
       interval: "weekly"
-    # Ignore aws-cdk and aws-sdk
-    ignore:
-      - dependency-name: "@aws-cdk/*"
