@@ -18,6 +18,7 @@
     "@typescript-eslint/parser": "^4.33.0",
     "aws-cdk": "^2.2.0",
     "constructs": "^10.0.0",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "husky": "^7.0.4",
@@ -29,11 +30,16 @@
     "typescript": "~4.5.2"
   },
   "dependencies": {
-    "aws-cdk-lib": "^2.2.0",
     "@aws-cdk/aws-glue-alpha": "2.2.0-alpha.0",
+    "aws-cdk-lib": "^2.2.0",
     "source-map-support": "^0.5.21"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
