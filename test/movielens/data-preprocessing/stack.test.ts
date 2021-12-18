@@ -9,7 +9,10 @@ describe("Movielens data preprocessing stack", () => {
   });
 
   test("Raw data bucket is created", () => {
-    const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {});
+    const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {
+      athenaWorkgroupName: "test",
+      glueDatabaseName: "test",
+    });
 
     const assert = assertions.Template.fromStack(nestedStack);
     assert.hasResourceProperties("AWS::S3::Bucket", {
@@ -45,7 +48,10 @@ describe("Movielens data preprocessing stack", () => {
   });
 
   test("Raw data bucket is deleted by default", () => {
-    const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {});
+    const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {
+      athenaWorkgroupName: "test",
+      glueDatabaseName: "test",
+    });
     const assert = assertions.Template.fromStack(nestedStack);
     assert.hasResource("AWS::S3::Bucket", {
       UpdateReplacePolicy: "Delete",
@@ -56,6 +62,8 @@ describe("Movielens data preprocessing stack", () => {
   test("Raw data bucket is set to retain if requested", () => {
     const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {
       retainData: true,
+      athenaWorkgroupName: "test",
+      glueDatabaseName: "test",
     });
 
     const assert = assertions.Template.fromStack(nestedStack);

@@ -6,6 +6,8 @@ import selectDatasets from "./athena-queries/select-datasets";
 
 export interface DataPreparationPipelineProps extends NestedStackProps {
   retainData?: boolean;
+  athenaWorkgroupName: string;
+  glueDatabaseName: string;
 }
 
 export class MovielensDataPreprocessingStack extends NestedStack {
@@ -21,8 +23,8 @@ export class MovielensDataPreprocessingStack extends NestedStack {
     });
 
     const athenaPreprocessing = new AthenaPreprocessing(this, "athena-data-preparation", {
-      workgroupName: `${NestedStack.of(this).stackName}-movielens`,
-      databaseName: `${NestedStack.of(this).stackName}-movielens`,
+      workgroupName: props.athenaWorkgroupName,
+      databaseName: props.glueDatabaseName,
       retainResults: props.retainData,
       rawDataBucket: rawDataBucket,
       datasetSources: {

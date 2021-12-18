@@ -17,17 +17,23 @@ new MovielensStack(app, "personalize-movielens-dataanalysis-dev", {
   },
   dataPreprocessing: {
     retainData: false,
+    athenaWorkgroupName: "movielens-dataanalysis-dev",
+    glueDatabaseName: "movielens-dataanalysis-dev",
   },
 });
 
 new MovielensStack(app, "personalize-movielens-dev", {
   dataPreprocessing: {
     retainData: false,
+    athenaWorkgroupName: "movielens-dev",
+    glueDatabaseName: "movielens-dev",
   },
 });
 
 new MovielensStack(app, "personalize-movielens-prod", {
   dataPreprocessing: {
     retainData: true,
+    athenaWorkgroupName: "movielens-prod",
+    glueDatabaseName: "movielens-prod",
   },
 });

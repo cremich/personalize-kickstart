@@ -13,6 +13,8 @@ interface MovielensStackProps extends StackProps {
   };
   readonly dataPreprocessing: {
     readonly retainData: boolean;
+    readonly athenaWorkgroupName: string;
+    readonly glueDatabaseName: string;
   };
 }
 export class MovielensStack extends Stack {
@@ -28,6 +30,8 @@ export class MovielensStack extends Stack {
 
     new MovielensDataPreprocessingStack(this, "preprocessing", {
       retainData: props.dataPreprocessing.retainData,
+      athenaWorkgroupName: props.dataPreprocessing.athenaWorkgroupName,
+      glueDatabaseName: props.dataPreprocessing.glueDatabaseName,
     });
 
     Tags.of(this).add("application", "personalize");
