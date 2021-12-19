@@ -1,6 +1,7 @@
 import { Construct } from "constructs";
 import { RemovalPolicy, Tags, NestedStack, CfnOutput, NestedStackProps } from "aws-cdk-lib";
 import { aws_s3 as s3 } from "aws-cdk-lib";
+import { aws_s3_deployment as s3deploy } from "aws-cdk-lib";
 import { AthenaPreprocessing } from "../../data-preprocessing/constructs/athena-preprocessing";
 import selectDatasets from "./athena-queries/select-datasets";
 
@@ -8,6 +9,7 @@ export interface DataPreparationPipelineProps extends NestedStackProps {
   retainData?: boolean;
   athenaWorkgroupName: string;
   glueDatabaseName: string;
+  loadTestData?: boolean;
 }
 
 export class MovielensDataPreprocessingStack extends NestedStack {
@@ -22,6 +24,42 @@ export class MovielensDataPreprocessingStack extends NestedStack {
       removalPolicy: props.retainData ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     });
 
+    if (props.loadTestData) {
+      const currentDate = new Date();
+      const s3PrefixRatings = `ratings/year=${currentDate.getFullYear()}/month=${
+        currentDate.getMonth() + 1
+      }/day=${currentDate.getDate()}`;
+      const s3PrefixMovies = `movies/year=${currentDate.getFullYear()}/month=${
+        currentDate.getMonth() + 1
+      }/day=${currentDate.getDate()}`;
+
+      const rawDataAsset = s3deploy.Source.asset("./lib/movielens/data/raw", {});
+
+      /**
+       * Note that, by default, all files are included. This means that providing only an
+       * --include filter will not change what files are transferred. --include will only
+       * re-include files that have been excluded from an --exclude filter. If you only want
+       * to upload files with a particular extension, you need to first exclude all files,
+       * then re-include the files with the particular extension. This command will upload only
+       * files ending with .jpg:
+       */
+      new s3deploy.BucketDeployment(this, "upload-ratings-test-data", {
+        sources: [rawDataAsset],
+        destinationBucket: rawDataBucket,
+        destinationKeyPrefix: s3PrefixRatings,
+        include: ["ratings.csv"],
+        exclude: ["*"],
+      });
+
+      new s3deploy.BucketDeployment(this, "upload-movies-test-data", {
+        sources: [rawDataAsset],
+        destinationBucket: rawDataBucket,
+        destinationKeyPrefix: s3PrefixMovies,
+        include: ["movies.csv"],
+        exclude: ["*"],
+      });
+    }
+
     const athenaPreprocessing = new AthenaPreprocessing(this, "athena-data-preparation", {
       workgroupName: props.athenaWorkgroupName,
       databaseName: props.glueDatabaseName,
@@ -33,7 +71,7 @@ export class MovielensDataPreprocessingStack extends NestedStack {
           crawlerS3TargetPath: `s3://${rawDataBucket.bucketName}/movies/`,
         },
         interactions: {
-          query: selectDatasets.items,
+          query: selectDatasets.interactions,
           crawlerS3TargetPath: `s3://${rawDataBucket.bucketName}/ratings/`,
         },
       },

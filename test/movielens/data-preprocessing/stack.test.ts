@@ -72,4 +72,46 @@ describe("Movielens data preprocessing stack", () => {
       DeletionPolicy: "Retain",
     });
   });
+
+  test("Movielens raw test data for ratings are uploaded if requested", () => {
+    const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {
+      retainData: true,
+      athenaWorkgroupName: "test",
+      glueDatabaseName: "test",
+      loadTestData: true,
+    });
+
+    const currentDate = new Date();
+    const s3Prefix = `ratings/year=${currentDate.getFullYear()}/month=${
+      currentDate.getMonth() + 1
+    }/day=${currentDate.getDate()}`;
+
+    const assert = assertions.Template.fromStack(nestedStack);
+    assert.hasResourceProperties("Custom::CDKBucketDeployment", {
+      DestinationBucketKeyPrefix: s3Prefix,
+      Include: ["ratings.csv"],
+      Exclude: ["*"],
+    });
+  });
+
+  test("Movielens raw test data for movies are uploaded if requested", () => {
+    const nestedStack = new MovielensDataPreprocessingStack(stack, "movielens-data-preparation", {
+      retainData: true,
+      athenaWorkgroupName: "test",
+      glueDatabaseName: "test",
+      loadTestData: true,
+    });
+
+    const currentDate = new Date();
+    const s3Prefix = `movies/year=${currentDate.getFullYear()}/month=${
+      currentDate.getMonth() + 1
+    }/day=${currentDate.getDate()}`;
+
+    const assert = assertions.Template.fromStack(nestedStack);
+    assert.hasResourceProperties("Custom::CDKBucketDeployment", {
+      DestinationBucketKeyPrefix: s3Prefix,
+      Include: ["movies.csv"],
+      Exclude: ["*"],
+    });
+  });
 });

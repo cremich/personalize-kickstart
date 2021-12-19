@@ -19,6 +19,7 @@ new MovielensStack(app, "personalize-movielens-dataanalysis-dev", {
     retainData: false,
     athenaWorkgroupName: "movielens-dataanalysis-dev",
     glueDatabaseName: "movielens-dataanalysis-dev",
+    loadTestData: true,
   },
 });
 
@@ -27,6 +28,7 @@ new MovielensStack(app, "personalize-movielens-dev", {
     retainData: false,
     athenaWorkgroupName: "movielens-dev",
     glueDatabaseName: "movielens-dev",
+    loadTestData: true,
   },
 });
 
@@ -35,5 +37,6 @@ new MovielensStack(app, "personalize-movielens-prod", {
     retainData: true,
     athenaWorkgroupName: "movielens-prod",
     glueDatabaseName: "movielens-prod",
+    loadTestData: false,
   },
 });

@@ -15,6 +15,7 @@ interface MovielensStackProps extends StackProps {
     readonly retainData: boolean;
     readonly athenaWorkgroupName: string;
     readonly glueDatabaseName: string;
+    readonly loadTestData?: boolean;
   };
 }
 export class MovielensStack extends Stack {
@@ -32,6 +33,7 @@ export class MovielensStack extends Stack {
       retainData: props.dataPreprocessing.retainData,
       athenaWorkgroupName: props.dataPreprocessing.athenaWorkgroupName,
       glueDatabaseName: props.dataPreprocessing.glueDatabaseName,
+      loadTestData: props.dataPreprocessing.loadTestData,
     });
 
     Tags.of(this).add("application", "personalize");
