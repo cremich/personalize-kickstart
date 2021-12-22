@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  quality_check:
+  build:
     runs-on: ubuntu-latest
 
     strategy:
@@ -30,6 +30,6 @@ jobs:
       - name: Lint sources
         run: npm run lint        
       - name: Run tests
-        run: npm test:ci
+        run: npm run test:ci
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2.1.0
