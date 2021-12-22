@@ -1,8 +1,11 @@
 *.js
 !jest.config.js
+!commitlint.config.js
 *.d.ts
 node_modules
 
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+coverage
