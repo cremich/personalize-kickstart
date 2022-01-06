@@ -22,3 +22,9 @@ All commits SHOULD adhere to the [Conventional Commits specification](https://co
 - **feat:** a commit of the type feat introduces a new feature to the codebase (this correlates with MINOR in Semantic Versioning).
 - **fix:** a commit of the type fix patches a bug in your codebase (this correlates with PATCH in Semantic Versioning).
 - **task:** general changes like adding documentation, formatting code, ...
+
+In addition to the specification we use tooling to ensure the proper use.
+
+- [Commitizen](https://commitizen-tools.github.io/commitizen/)
+- [Commitlint](https://commitlint.js.org)
+- [Husky](https://typicode.github.io/husky)
